@@ -1,0 +1,98 @@
+DROP TEMPORARY TABLE IF EXISTS temp_table_data;
+CREATE TEMPORARY TABLE IF NOT EXISTS temp_table_data (
+Field VARCHAR(200),
+recOverall VARCHAR(20),
+recYear VARCHAR(20),
+recMonth VARCHAR(20),
+recDay VARCHAR(20),
+VarName VARCHAR(20),
+Flag VARCHAR(20)
+);
+delete from temp_table_data;
+
+
+#percOverall VARCHAR(20),
+#percYear VARCHAR(20),
+#percMonth VARCHAR(20),
+#percDay VARCHAR(20),
+
+# Topic
+#SET @vsum=(select count(distinct ptcodefull) from labfu where age between 15 and 100);
+insert into temp_table_data
+select 'Title' as Field, 'All n (%)' as 'recOverall','Year n (%)' as 'recYear', 'Month n (%)' as 'recMonth', 'Day n (%)' as 'recDay', 'target' as VarName , '0' as 'Flag' ;
+
+
+
+SET @recOverallx=(select count(distinct pid) from temp_target);
+SET @recYear=(select count(distinct pid) from temp_year);
+SET @recMonth=(select count(distinct pid) from temp_month);
+insert into temp_table_data
+select 'Target (DM/HT)' as Field, @recOverallx as 'recOverall',@recYear as 'recYear',@recMonth as 'recMonth', '' as 'recDay', 'target' as VarName , '0' as 'Flag' ;
+
+
+# Section 1,  Row 1
+insert into temp_table_data
+select 'Screening' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Not CKD' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Waiting for LAB Follow-up' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Waiting for doctor confirm' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        CKD confirmed' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+
+# Section 2
+insert into temp_table_data
+select '    Not screen' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        insufficient into for Dx' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Waiting for verification' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Confirm CKD' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+
+# Section 3
+insert into temp_table_data
+select '    Total diag CKD' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+
+# Section 4
+insert into temp_table_data
+select '    Total CKD' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Stage 1' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Stage 2' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Stage 3a' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Stage 3b' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Stage 4' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Stage 5' as Field, '' as 'recOverall','' as 'recYear', '' as 'recMonth', '' as 'recDay', 'target' as VarName , '1' as 'Flag' ;
+
+ALTER TABLE temp_table_data
+DROP COLUMN `VarName`,
+DROP COLUMN `Flag`;
+DROP TABLE IF EXISTS tb_data_data;
+
+create table tb_data_data
+select * from temp_table_data;
+select * from temp_table_data;

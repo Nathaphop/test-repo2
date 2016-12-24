@@ -1,0 +1,88 @@
+DROP TEMPORARY TABLE IF EXISTS temp_table_data;
+CREATE TEMPORARY TABLE IF NOT EXISTS temp_table_data (
+Field VARCHAR(200),
+recYear_59 VARCHAR(20),
+VarName VARCHAR(20),
+Flag VARCHAR(20)
+);
+delete from temp_table_data;
+
+
+insert into temp_table_data
+select 'Title' as Field,'Year n (%)' as 'recYear', 'target' as VarName , '0' as 'Flag' ;
+
+
+
+#Target DM/HT
+SET @recYear=(select count(*) from unique_year);
+insert into temp_table_data
+select 'Target (DM/HT)' as Field,@recYear as 'recYear', 'target' as VarName , '0' as 'Flag' ;
+
+
+#Screening
+SET @recScreen=(select count(*) from unique_year where egfr=1 and ua=1);
+insert into temp_table_data
+select 'Screening' as Field,@recScreen as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Not CKD' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Waiting for LAB Follow-up' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Waiting for doctor confirm' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        CKD confirmed' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+
+# Section 2
+insert into temp_table_data
+select '    Not screen' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        insufficient into for Dx' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Waiting for verification' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Confirm CKD' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+
+# Section 3
+insert into temp_table_data
+select '    Total diag CKD' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+
+# Section 4
+insert into temp_table_data
+select '    Total CKD' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Stage 1' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Stage 2' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Stage 3a' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Stage 3b' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Stage 4' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+insert into temp_table_data
+select '        Stage 5' as Field,'' as 'recYear', 'target' as VarName , '1' as 'Flag' ;
+
+ALTER TABLE temp_table_data
+DROP COLUMN `VarName`,
+DROP COLUMN `Flag`;
+DROP TABLE IF EXISTS tb_data_data;
+
+create table tb_data_data
+select * from temp_table_data;
+select * from temp_table_data;

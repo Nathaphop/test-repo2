@@ -1,0 +1,145 @@
+set @curm=MONTH(NOW());
+set @cury=YEAR(NOW());
+set @ybegin='2015-10-01';
+set @yend='2016-09-30';
+
+
+#All target diagnosis_ipd
+DROP TABLE IF EXISTS temp_target;
+CREATE TABLE IF NOT EXISTS temp_target (
+select HOSPCODE,PID,DIAGCODE,DATETIME_ADMIT from tb_data_24 where (
+(DIAGCODE like 'E10%') 
+or (DIAGCODE like 'E11%') 
+or (DIAGCODE like 'E12%') 
+or (DIAGCODE like 'E13%') 
+or (DIAGCODE like 'E14%')) 
+or ((DIAGCODE like 'I10%') 
+or (DIAGCODE like 'I11%') or (DiagCode like 'I14%') or (DiagCode like 'I15%')
+));
+
+
+DROP TABLE IF EXISTS temp_target_ignor;
+CREATE TABLE IF NOT EXISTS temp_target_ignor (
+select HOSPCODE,PID,DIAGCODE from tb_data_24 where (
+(DiagCode like 'N181%') 
+or (DiagCode like 'N182%') 
+or (DiagCode like 'N183%') 
+or (DiagCode like 'N184%') 
+or (DiagCode like 'N185%')) 
+or ((DiagCode like 'N186%') 
+or (DiagCode like 'N187%') 
+or (DiagCode like 'N188%') 
+or (DiagCode like 'N189%')
+or (DiagCode like 'E102')
+or (DiagCode like 'E112')
+or (DiagCode like 'E122')
+or (DiagCode like 'E132')
+or (DiagCode like 'E142')
+or (DiagCode like 'I151')
+));
+ALTER TABLE temp_target ADD INDEX `PID` (`PID`) ;
+ALTER TABLE temp_target_ignor ADD INDEX `PID` (`PID`) ;
+
+ALTER TABLE temp_target ADD COLUMN error VARCHAR(10);
+
+update temp_target inner join temp_target_ignor on temp_target_ignor.PID=temp_target.PID 
+set temp_target.error='1'
+where temp_target_ignor.PID is not null;
+
+delete from temp_target where temp_target.error='1';
+
+DROP TABLE IF EXISTS temp_target_opd;
+CREATE TABLE IF NOT EXISTS temp_target_opd (
+select HOSPCODE,PID,DIAGCODE,DATE_SERV from tb_data_15 where (
+(DiagCode like 'E10%') 
+or (DiagCode like 'E11%') 
+or (DiagCode like 'E12%') 
+or (DiagCode like 'E13%') 
+or (DiagCode like 'E14%')) 
+or ((DiagCode like 'I10%') 
+or (DiagCode like 'I11%') or (DiagCode like 'I14%') or (DiagCode like 'I15%')
+));
+
+DROP TABLE IF EXISTS temp_target_opd_ignor;
+CREATE TABLE IF NOT EXISTS temp_target_opd_ignor (
+select HOSPCODE,PID,DIAGCODE from tb_data_15 where (
+(DiagCode like 'N181%') 
+or (DiagCode like 'N182%') 
+or (DiagCode like 'N183%') 
+or (DiagCode like 'N184%') 
+or (DiagCode like 'N185%')) 
+or ((DiagCode like 'N186%') 
+or (DiagCode like 'N187%') 
+or (DiagCode like 'N188%') 
+or (DiagCode like 'N189%')
+or (DiagCode like 'E102')
+or (DiagCode like 'E112')
+or (DiagCode like 'E122')
+or (DiagCode like 'E132')
+or (DiagCode like 'E142')
+or (DiagCode like 'I151')
+));
+ALTER TABLE temp_target_opd  ADD INDEX `PID` (`PID`) ;
+ALTER TABLE temp_target_opd_ignor ADD INDEX `PID` (`PID`) ;
+ALTER TABLE temp_target_opd ADD COLUMN error VARCHAR(20);
+
+update temp_target_opd inner join temp_target_opd_ignor on temp_target_opd_ignor.PID=temp_target_opd.PID 
+set temp_target_opd.error='1'
+where temp_target_opd_ignor.PID is not null;
+
+delete from temp_target_opd where temp_target_opd.error='1';
+
+ALTER TABLE temp_target CHANGE DATETIME_ADMIT DATE_SERV DATE;
+insert into temp_target select * from temp_target_opd;
+
+
+#Target for this year
+DROP TABLE IF EXISTS temp_year;
+CREATE TABLE IF NOT EXISTS temp_year SELECT * FROM temp_target;
+
+DROP TABLE IF EXISTS temp_person;
+CREATE TABLE IF NOT EXISTS temp_person (
+select HOSPCODE,PID,DISCHARGE from tb_data_1 where 
+DISCHARGE!='1'
+and DISCHARGE!='2'
+and DISCHARGE!='3'
+);
+ALTER TABLE temp_person ADD INDEX `PID` (`PID`);
+
+update temp_year inner join temp_person on temp_person.PID=temp_year.PID 
+set temp_year.error='1'
+where temp_person.PID is null;
+
+delete from temp_year where temp_year.error='1';
+
+DROP TABLE IF EXISTS temp_death;
+CREATE TABLE IF NOT EXISTS temp_death
+select HOSPCODE,PID from tb_data_3;
+
+ALTER TABLE temp_death ADD INDEX `PID` (`PID`) ;
+
+update temp_year inner join temp_death on temp_death.PID=temp_year.PID 
+set temp_year.error='1'
+where temp_death.PID is not null;
+
+delete from temp_year where temp_year.error='1';
+ALTER TABLE temp_year ADD INDEX `PID` (`PID`) ;
+
+
+#Lab
+DROP TABLE IF EXISTS unique_year;
+CREATE TABLE unique_year SELECT PID,0 as egfr,0 as ua FROM temp_year;
+ALTER IGNORE TABLE unique_year ADD UNIQUE INDEX dup (PID);
+
+UPDATE unique_year LEFT JOIN tb_data_21 on tb_data_21.PID=unique_year.PID 
+SET unique_year.egfr='1' WHERE (tb_data_21.PID IS NOT NULL) 
+AND (tb_data_21.DATE_SERV BETWEEN @ybegin AND @yend) AND (LABTEST='14');
+
+UPDATE unique_year LEFT JOIN tb_data_21 on tb_data_21.PID=unique_year.PID 
+SET unique_year.ua='1' WHERE (tb_data_21.PID IS NOT NULL) 
+AND (tb_data_21.DATE_SERV BETWEEN @ybegin AND @yend) AND (LABTEST='12' OR LABTEST='13');
+
+
+
+
+

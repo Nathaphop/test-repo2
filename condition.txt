@@ -1,0 +1,145 @@
+set @current='2013-09-30';
+set @curm=9;
+set @cury=2013;
+
+#All target
+DROP TABLE IF EXISTS temp_target;
+CREATE TABLE IF NOT EXISTS temp_target (
+select HOSPCODE,PID,DIAGCODE,DATETIME_ADMIT from 13905_diagnosis_ipd where (
+(DIAGCODE like 'E10%') 
+or (DIAGCODE like 'E11%') 
+or (DIAGCODE like 'E12%') 
+or (DIAGCODE like 'E13%') 
+or (DIAGCODE like 'E14%')) 
+or ((DIAGCODE like 'I10%') 
+or (DIAGCODE like 'I11%') or (DiagCode like 'I14%') or (DiagCode like 'I15%')
+));
+
+DROP TABLE IF EXISTS temp_target_ignor;
+CREATE TABLE IF NOT EXISTS temp_target_ignor (
+select HOSPCODE,PID,DIAGCODE from 13905_diagnosis_ipd where (
+(DiagCode like 'N181%') 
+or (DiagCode like 'N182%') 
+or (DiagCode like 'N183%') 
+or (DiagCode like 'N184%') 
+or (DiagCode like 'N185%')) 
+or ((DiagCode like 'N186%') 
+or (DiagCode like 'N187%') 
+or (DiagCode like 'N188%') 
+or (DiagCode like 'N189%')
+or (DiagCode like 'E102')
+or (DiagCode like 'E112')
+or (DiagCode like 'E122')
+or (DiagCode like 'E132')
+or (DiagCode like 'E142')
+or (DiagCode like 'I151')
+));
+ALTER TABLE temp_target ADD INDEX `PID` (`PID`) ;
+ALTER TABLE temp_target_ignor ADD INDEX `PID` (`PID`) ;
+
+ALTER TABLE temp_target ADD COLUMN error VARCHAR(10);
+
+update temp_target inner join temp_target_ignor on temp_target_ignor.PID=temp_target.PID 
+set temp_target.error='1'
+where temp_target_ignor.PID is not null;
+
+delete from temp_target where temp_target.error='1';
+
+DROP TABLE IF EXISTS temp_target_opd;
+CREATE TABLE IF NOT EXISTS temp_target_opd (
+select HOSPCODE,PID,DIAGCODE,DATE_SERV from 13905_diagnosis_opd where (
+(DiagCode like 'E10%') 
+or (DiagCode like 'E11%') 
+or (DiagCode like 'E12%') 
+or (DiagCode like 'E13%') 
+or (DiagCode like 'E14%')) 
+or ((DiagCode like 'I10%') 
+or (DiagCode like 'I11%') or (DiagCode like 'I14%') or (DiagCode like 'I15%')
+));
+
+DROP TABLE IF EXISTS temp_target_opd_ignor;
+CREATE TABLE IF NOT EXISTS temp_target_opd_ignor (
+select HOSPCODE,PID,DIAGCODE from 13905_diagnosis_opd where (
+(DiagCode like 'N181%') 
+or (DiagCode like 'N182%') 
+or (DiagCode like 'N183%') 
+or (DiagCode like 'N184%') 
+or (DiagCode like 'N185%')) 
+or ((DiagCode like 'N186%') 
+or (DiagCode like 'N187%') 
+or (DiagCode like 'N188%') 
+or (DiagCode like 'N189%')
+or (DiagCode like 'E102')
+or (DiagCode like 'E112')
+or (DiagCode like 'E122')
+or (DiagCode like 'E132')
+or (DiagCode like 'E142')
+or (DiagCode like 'I151')
+));
+ALTER TABLE temp_target_opd  ADD INDEX `PID` (`PID`) ;
+ALTER TABLE temp_target_opd_ignor ADD INDEX `PID` (`PID`) ;
+ALTER TABLE temp_target_opd ADD COLUMN error VARCHAR(20);
+
+update temp_target_opd inner join temp_target_opd_ignor on temp_target_opd_ignor.PID=temp_target_opd.PID 
+set temp_target_opd.error='1'
+where temp_target_opd_ignor.PID is not null;
+
+delete from temp_target_opd where temp_target_opd.error='1';
+
+ALTER TABLE temp_target CHANGE DATETIME_ADMIT DATE_SERV DATE;
+insert into temp_target select * from temp_target_opd;
+
+update temp_target left join 13905_person on temp_target.PID=13905_person.PID 
+set temp_target.error='1'
+where 13905_person.PID is null;
+
+delete from temp_target where temp_target.error='1';
+
+#Target for this year
+DROP TABLE IF EXISTS temp_year;
+CREATE TABLE IF NOT EXISTS temp_year SELECT * FROM temp_target;
+
+DROP TABLE IF EXISTS temp_person;
+CREATE TABLE IF NOT EXISTS temp_person (
+select HOSPCODE,PID,DISCHARGE from 13905_person where (
+(DISCHARGE=1) 
+or (DISCHARGE=2) 
+or (DISCHARGE=3) 
+));
+ALTER TABLE temp_person ADD INDEX `PID` (`PID`) ;
+
+update temp_year inner join temp_person on temp_person.PID=temp_year.PID 
+set temp_year.error='1'
+where temp_person.PID is not null;
+
+delete from temp_year where temp_year.error='1';
+
+DROP TABLE IF EXISTS temp_death;
+CREATE TABLE IF NOT EXISTS temp_death
+select HOSPCODE,PID from 13905_death;
+
+ALTER TABLE temp_death ADD INDEX `PID` (`PID`) ;
+
+update temp_year inner join temp_death on temp_death.PID=temp_year.PID 
+set temp_year.error='1'
+where temp_death.PID is not null;
+
+delete from temp_year where temp_year.error='1';
+
+#Target for this month
+DROP TABLE IF EXISTS temp_month;
+CREATE TABLE IF NOT EXISTS temp_month 
+SELECT  a.*
+FROM temp_year a
+    INNER JOIN
+    (
+        SELECT PID,MIN(DATE_SERV) as DATE_SERV
+        FROM temp_year
+        GROUP BY PID
+    ) b
+        ON a.PID = b.PID AND
+            a.DATE_SERV = b.DATE_SERV;
+DELETE FROM temp_month WHERE MONTH(DATE_SERV)!=@curm and YEAR(DATE_SERV)!=@cury;
+
+
+
